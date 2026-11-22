@@ -15,7 +15,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--behavioral", action="store_true", help="add delinquency indicators")
     parser.add_argument("--sample", type=float, default=None, help="fraction of cohort to sample")
-    parser.add_argument("--tune", action="store_true", help="run a small grid search")
+    parser.add_argument("--tune", action="store_true", help="run expanded hyperparameter search")
+    parser.add_argument("--n-iter", type=int, default=48, help="search iterations per GBM (tune only)")
+    parser.add_argument("--n-jobs", type=int, default=-1, help="parallel jobs (-1 = all cores)")
     args = parser.parse_args()
 
     data = tht.load_data()
@@ -33,7 +35,9 @@ def main():
     print(f"Default rate    : {y.mean():.1%}  ({y.sum():,} bad / {(1 - y).sum():,} good)")
     print(f"Features        : {X.shape[1]}  (numeric + categorical)\n")
 
-    metrics, importances = tht.run_benchmark(X, y, tune=args.tune)
+    metrics, importances = tht.run_benchmark(
+        X, y, tune=args.tune, n_iter=args.n_iter, n_jobs=args.n_jobs
+    )
 
     print("Test-set metrics (30% holdout, stratified):")
     print(f"{'model':<14}{'AUC':>8}{'KS':>8}{'Gini':>8}")

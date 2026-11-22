@@ -7,8 +7,8 @@ Benchmarks four model families against the same holdout split:
   * XGBoost
 
 By default the GBMs use fixed, reasonable hyperparameters (fast). Pass
-``tune=True`` to run a small grid search (4 combos x 3-fold CV) on the train fold
-for an extra lift at a modest time cost.
+``tune=True`` to run an expanded randomized hyperparameter search (parallelised
+with ``n_jobs=-1``) over a broad grid for an extra lift.
 """
 import warnings
 
@@ -20,7 +20,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -63,51 +63,74 @@ def evaluate(y_true, y_score):
     }
 
 
-def _make_models(random_state):
-    """Fixed, reasonable hyperparameters for a fast baseline comparison."""
+def _model_specs(random_state):
+    """(estimator, search space) per family. ``None`` search space = no tuning.
+
+    Tree boosters set ``n_jobs=1`` internally so the outer ``RandomizedSearchCV``
+    can parallelise across folds/combos without thread oversubscription.
+    """
     return {
-        "logistic": LogisticRegression(max_iter=2000),
-        "hist_gbm": HistGradientBoostingClassifier(
-            learning_rate=0.05,
-            max_iter=400,
-            max_leaf_nodes=31,
-            min_samples_leaf=20,
-            random_state=random_state,
+        "logistic": (
+            LogisticRegression(max_iter=2000),
+            None,
         ),
-        "lightgbm": lgb.LGBMClassifier(
-            n_estimators=400,
-            learning_rate=0.05,
-            num_leaves=31,
-            min_child_samples=20,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            reg_lambda=1.0,
-            random_state=random_state,
-            verbose=-1,
+        "hist_gbm": (
+            HistGradientBoostingClassifier(random_state=random_state),
+            {
+                "learning_rate": [0.01, 0.02, 0.03, 0.05, 0.08, 0.1],
+                "max_leaf_nodes": [15, 31, 63, 127],
+                "min_samples_leaf": [10, 20, 50, 100],
+                "l2_regularization": [0.0, 0.1, 1.0, 10.0],
+                "max_iter": [300, 500, 800],
+            },
         ),
-        "xgboost": xgb.XGBClassifier(
-            n_estimators=400,
-            learning_rate=0.05,
-            max_depth=6,
-            min_child_weight=3,
-            subsample=0.8,
-            colsample_bytree=0.8,
-            reg_lambda=1.0,
-            tree_method="hist",
-            eval_metric="logloss",
-            random_state=random_state,
-            verbosity=0,
+        "lightgbm": (
+            lgb.LGBMClassifier(n_jobs=1, random_state=random_state, verbose=-1),
+            {
+                "learning_rate": [0.01, 0.02, 0.03, 0.05, 0.08, 0.1],
+                "num_leaves": [15, 31, 63, 127],
+                "min_child_samples": [10, 20, 50, 100],
+                "subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+                "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+                "reg_lambda": [0.0, 0.1, 1.0, 10.0],
+                "n_estimators": [300, 500, 800],
+            },
+        ),
+        "xgboost": (
+            xgb.XGBClassifier(
+                n_jobs=1,
+                tree_method="hist",
+                eval_metric="logloss",
+                random_state=random_state,
+                verbosity=0,
+            ),
+            {
+                "learning_rate": [0.01, 0.02, 0.03, 0.05, 0.08, 0.1],
+                "max_depth": [3, 4, 5, 6, 8, 10],
+                "min_child_weight": [1, 3, 5, 10],
+                "subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+                "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+                "reg_lambda": [0.0, 0.1, 1.0, 10.0],
+                "n_estimators": [300, 500, 800],
+            },
         ),
     }
 
 
-def _tune_grids():
-    """Small deterministic search spaces for the optional tuning pass."""
-    return {
-        "hist_gbm": {"learning_rate": [0.03, 0.06], "max_leaf_nodes": [31, 63]},
-        "lightgbm": {"learning_rate": [0.03, 0.06], "num_leaves": [31, 63]},
-        "xgboost": {"learning_rate": [0.03, 0.06], "max_depth": [5, 7]},
-    }
+def _fit_tuned(base, param_dist, X, y, n_iter, cv, n_jobs, random_state):
+    """Randomized search over the expanded grid, parallelised with ``n_jobs``."""
+    search = RandomizedSearchCV(
+        base,
+        param_dist,
+        n_iter=n_iter,
+        cv=cv,
+        scoring="roc_auc",
+        random_state=random_state,
+        n_jobs=n_jobs,
+        refit=True,
+    )
+    search.fit(X, y)
+    return search.best_estimator_
 
 
 def _aggregate_importances(pre, model, X_te_t, y_te, numeric_cols, categorical_cols):
@@ -133,12 +156,20 @@ def _aggregate_importances(pre, model, X_te_t, y_te, numeric_cols, categorical_c
     return dict(sorted(agg.items(), key=lambda kv: kv[1], reverse=True))
 
 
-def run_benchmark(X, y, test_size=0.3, tune=False, random_state=42):
+def run_benchmark(
+    X,
+    y,
+    test_size=0.3,
+    tune=False,
+    n_iter=48,
+    cv=4,
+    n_jobs=-1,
+    random_state=42,
+):
     """Fit all models and return test-set metrics + LightGBM importances.
 
-    Returns ``(metrics, importances)`` where ``metrics`` maps model name to
-    ``{"auc", "ks", "gini"}`` and ``importances`` maps feature name to its
-    aggregated permutation importance.
+    ``tune=True`` runs an expanded randomized hyperparameter search (parallelised
+    with ``n_jobs``, default ``-1`` = all cores) on the train fold.
     """
     numeric_cols = list(X.select_dtypes(include=[np.number]).columns)
     categorical_cols = list(X.select_dtypes(exclude=[np.number]).columns)
@@ -151,18 +182,15 @@ def run_benchmark(X, y, test_size=0.3, tune=False, random_state=42):
     X_tr_t = pre.fit_transform(X_tr)
     X_te_t = pre.transform(X_te)
 
-    models = _make_models(random_state)
-    grids = _tune_grids()
+    specs = _model_specs(random_state)
 
     metrics = {}
     fitted = {}
-    for name, model in models.items():
-        if tune and name in grids:
-            model = GridSearchCV(
-                model, grids[name], cv=3, scoring="roc_auc", n_jobs=None
-            ).fit(X_tr_t, y_tr).best_estimator_
+    for name, (base, param_dist) in specs.items():
+        if tune and param_dist is not None:
+            model = _fit_tuned(base, param_dist, X_tr_t, y_tr, n_iter, cv, n_jobs, random_state)
         else:
-            model.fit(X_tr_t, y_tr)
+            model = base.fit(X_tr_t, y_tr)
         fitted[name] = model
         proba = model.predict_proba(X_te_t)[:, 1]
         metrics[name] = evaluate(y_te, proba)

@@ -104,4 +104,11 @@ Estimated (simulated) hours — reconcile with actual time before reporting.
 | Outcomes analysis → pipeline direction (univariate AUC / segments) | 2.0 |
 | Colab / bootstrap / packaging / sharing design | 2.5 |
 | IFRS-9 / ECL / Markov roadmap design | 1.5 |
-| **Total** | **15.0** |
+| PD model build (features + 4-model benchmark) | 3.0 |
+| Leakage investigation & fix (payment-derived + behavioural) | 2.0 |
+| Internal mini-bureau (`anon_ssn`) + external-data exploration | 1.5 |
+| MLOps drift-monitoring pipeline | 2.0 |
+| Colab setup + git versioning | 1.5 |
+| Expanded hyperparameter search (parallel) | 1.0 |
+| Final packaging | 0.5 |
+| **Total** | **26.5** |

@@ -10,6 +10,8 @@ By default the GBMs use fixed, reasonable hyperparameters (fast). Pass
 ``tune=True`` to run a small grid search (4 combos x 3-fold CV) on the train fold
 for an extra lift at a modest time cost.
 """
+import warnings
+
 import numpy as np
 import lightgbm as lgb
 import xgboost as xgb
@@ -110,9 +112,15 @@ def _tune_grids():
 
 def _aggregate_importances(pre, model, X_te_t, y_te, numeric_cols, categorical_cols):
     """Permutation importances folded back to original features."""
-    r = permutation_importance(
-        model, X_te_t, y_te, n_repeats=5, scoring="roc_auc", random_state=42
-    )
+    with warnings.catch_warnings():
+        # LightGBM warns when it can't verify feature-name order on a numpy
+        # input; our pipeline controls ordering, so the warning is just noise.
+        warnings.filterwarnings(
+            "ignore", message="X does not have valid feature names", category=UserWarning
+        )
+        r = permutation_importance(
+            model, X_te_t, y_te, n_repeats=5, scoring="roc_auc", random_state=42
+        )
     per_col = dict(zip(pre.get_feature_names_out(), r.importances_mean))
 
     agg = {}

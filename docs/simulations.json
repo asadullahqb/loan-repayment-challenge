@@ -1,0 +1,65 @@
+{
+  "profitability": {
+    "n_loans": 8558,
+    "mean_pd": 0.6,
+    "lgd": 0.878,
+    "recovery_rate": 0.122,
+    "expected_profit": 6069419.0,
+    "profit_std": 28814.0,
+    "p5_profit": 6022140.0,
+    "p95_profit": 6116590.0,
+    "prob_loss": 0.0
+  },
+  "ifrs9": {
+    "ead0": 500.0,
+    "lgd": 0.878,
+    "term_installments": 13,
+    "scenario_ecl": {
+      "baseline": 237.84,
+      "upside": 171.68,
+      "downside": 321.65
+    },
+    "weighted_ecl": 242.25,
+    "weighted_ecl_pct_of_ead": 48.45
+  },
+  "markov": {
+    "transition_matrix": {
+      "states": [
+        "current",
+        "delinquent",
+        "collection"
+      ],
+      "matrix": [
+        [
+          0.954,
+          0.028,
+          0.018
+        ],
+        [
+          0.617,
+          0.317,
+          0.066
+        ],
+        [
+          0.794,
+          0.153,
+          0.054
+        ]
+      ]
+    },
+    "scenario_default_by_t": {
+      "baseline": {
+        "t12": 0.2132,
+        "t24": 0.3827
+      },
+      "upside": {
+        "t12": 0.1652,
+        "t24": 0.3046
+      },
+      "downside": {
+        "t12": 0.3002,
+        "t24": 0.5122
+      }
+    }
+  }
+}

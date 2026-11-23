@@ -82,6 +82,21 @@
   .login-box button { width: 100%; padding: 10px; background: var(--accent); color: #0f172a; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
   .login-error { color: var(--bad); font-size: 12px; margin-top: 10px; display: none; }
   footer { padding: 8px 32px 28px; color: #64748b; font-size: 12px; }
+  .sims { padding: 8px 32px 32px; }
+  .sims-title { font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 16px; }
+  .sim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 1000px) { .sim-grid { grid-template-columns: 1fr; } }
+  .sim-grid .card h3 { margin: 0 0 14px; font-size: 14px; color: var(--text); }
+  .sim-body { font-size: 13px; }
+  .sim-kv { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2b3a52; }
+  .sim-kv span { color: var(--muted); }
+  .sim-kv strong { font-variant-numeric: tabular-nums; }
+  .sim-table { margin-top: 6px; }
+  .sim-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #233048; }
+  .sim-row span:first-child { color: var(--muted); }
+  .sim-row span:last-child { font-variant-numeric: tabular-nums; }
+  .sim-row.head span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  .sim-sub { margin-top: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -123,11 +138,20 @@
     <div class="el">
       <h3 style="font-size:13px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;">Expected loss (illustrative)</h3>
       <div class="row"><span>Exposure at default (EAD)</span><span id="ead">—</span></div>
-      <div class="row"><span>Loss given default (LGD, assumed)</span><span>75%</span></div>
+      <div class="row"><span>Loss given default (LGD)</span><span id="lgd">75%</span></div>
       <div class="row"><span>Expected loss = PD × EAD × LGD</span><span id="el">—</span></div>
     </div>
   </div>
 </div>
+
+<section class="sims">
+  <h2 class="sims-title">Portfolio simulations</h2>
+  <div class="sim-grid">
+    <div class="card"><h3>Profitability (Monte Carlo)</h3><div id="simProfit" class="sim-body"></div></div>
+    <div class="card"><h3>IFRS-9 expected credit loss</h3><div id="simEcl" class="sim-body"></div></div>
+    <div class="card"><h3>Markov migration</h3><div id="simMarkov" class="sim-body"></div></div>
+  </div>
+</section>
 
 <footer>
   Logistic-regression scorecard (AUC 0.706 on holdout) trained on application-time features only — no post-origination leakage.
@@ -135,7 +159,8 @@
 </footer>
 
 <script>
-const LGD = 0.75;
+let LGD = 0.75;
+let SIMS = null;
 
 function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
 
@@ -290,8 +315,70 @@ const PROFILES = {
   "Returning customer": { leadType: "express", n_prior_loans: 4, clearfraudscore: 750, apr: 450, inq_30d: 3, inq_90d: 4, inq_365d: 8 },
 };
 
+function loadSims() { return fetch("simulations.json").then(r => r.json()); }
+
+function fmtMoney(n) {
+  if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+  if (Math.abs(n) >= 1e3) return "$" + (n / 1e3).toFixed(1) + "k";
+  return "$" + Math.round(n).toLocaleString();
+}
+
+function renderProfit(p) {
+  document.getElementById("simProfit").innerHTML = `
+    <div class="sim-kv"><span>Expected profit</span><strong>${fmtMoney(p.expected_profit)}</strong></div>
+    <div class="sim-kv"><span>Portfolio</span><strong>${p.n_loans.toLocaleString()} loans</strong></div>
+    <div class="sim-kv"><span>Loss given default</span><strong>${(p.lgd * 100).toFixed(1)}%</strong></div>
+    <div class="sim-kv"><span>Recovery rate</span><strong>${(p.recovery_rate * 100).toFixed(1)}%</strong></div>
+    <div class="sim-kv"><span>Profit (5–95% range)</span><strong>${fmtMoney(p.p5_profit)} – ${fmtMoney(p.p95_profit)}</strong></div>
+    <div class="sim-kv"><span>P(portfolio loss)</span><strong>${(p.prob_loss * 100).toFixed(1)}%</strong></div>`;
+}
+
+function renderEcl(e) {
+  const s = e.scenario_ecl;
+  document.getElementById("simEcl").innerHTML = `
+    <div class="sim-kv"><span>Weighted ECL</span><strong>$${e.weighted_ecl.toFixed(2)}</strong></div>
+    <div class="sim-kv"><span>% of EAD</span><strong>${e.weighted_ecl_pct_of_ead.toFixed(1)}%</strong></div>
+    <div class="sim-kv"><span>Term</span><strong>${e.term_installments} installments</strong></div>
+    <div class="sim-table">
+      <div class="sim-row head"><span>Scenario</span><span>ECL ($)</span></div>
+      <div class="sim-row"><span>Baseline</span><span>${s.baseline.toFixed(2)}</span></div>
+      <div class="sim-row"><span>Upside</span><span>${s.upside.toFixed(2)}</span></div>
+      <div class="sim-row"><span>Downside</span><span>${s.downside.toFixed(2)}</span></div>
+    </div>`;
+}
+
+function renderMarkov(m) {
+  const states = m.transition_matrix.states;
+  const mat = m.transition_matrix.matrix;
+  const rows = mat.map((r, i) =>
+    `<div class="sim-row"><span>${states[i]}</span><span>${r.map(x => x.toFixed(3)).join("  ")}</span></div>`
+  ).join("");
+  const scen = Object.entries(m.scenario_default_by_t).map(([k, v]) =>
+    `<div class="sim-row"><span>${k}</span><span>t12 ${(v.t12 * 100).toFixed(0)}% · t24 ${(v.t24 * 100).toFixed(0)}%</span></div>`
+  ).join("");
+  document.getElementById("simMarkov").innerHTML = `
+    <div class="sim-table">
+      <div class="sim-row head"><span>→ from state</span><span>current · delinq · collection</span></div>
+      ${rows}
+    </div>
+    <div class="sim-sub">Cumulative P(default) by scenario</div>
+    <div class="sim-table">${scen}</div>`;
+}
+
+function renderSims() {
+  renderProfit(SIMS.profitability);
+  renderEcl(SIMS.ifrs9);
+  renderMarkov(SIMS.markov);
+}
+
 function init() {
-  loadModel().then(m => { MODEL = m; renderChips(); renderInputs(); recompute(); });
+  Promise.all([loadModel(), loadSims()]).then(([m, s]) => {
+    MODEL = m;
+    SIMS = s;
+    LGD = s.ifrs9.lgd;
+    document.getElementById("lgd").textContent = Math.round(LGD * 100) + "%";
+    renderChips(); renderInputs(); renderSims(); recompute();
+  });
 }
 
 function renderChips() {

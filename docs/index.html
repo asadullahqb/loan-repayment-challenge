@@ -31,6 +31,10 @@
   header h1 { margin: 0; font-size: 22px; }
   header p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
   .badge { display: inline-block; margin-left: 10px; padding: 2px 10px; border-radius: 999px; font-size: 12px; background: #0b3a54; color: #7dd3fc; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip { padding: 6px 14px; border-radius: 999px; border: 1px solid #334155; background: var(--panel-2); color: var(--text); font-size: 13px; cursor: pointer; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.active { background: var(--accent); color: #0f172a; border-color: var(--accent); font-weight: 600; }
   .layout {
     display: grid;
     grid-template-columns: minmax(300px, 1fr) minmax(320px, 1.1fr);
@@ -99,6 +103,7 @@
 <div class="layout">
   <div class="card">
     <h2>Applicant attributes</h2>
+    <div class="chips" id="chips"></div>
     <div id="inputs"></div>
   </div>
 
@@ -277,8 +282,48 @@ async function tryLogin() {
   }
 }
 
+const PROFILES = {
+  "Prime": { clearfraudscore: 900, apr: 250, originallyScheduledPaymentAmount: 800, leadCost: 0, inq_30d: 2, inq_90d: 2, inq_365d: 4, n_prior_loans: 3, leadType: "rc_returning", identity_match: "match" },
+  "Typical": {},
+  "Subprime": { clearfraudscore: 420, apr: 660, originallyScheduledPaymentAmount: 3500, leadCost: 60, inq_30d: 20, inq_90d: 40, inq_365d: 80, leadType: "lead", identity_match: "mismatch" },
+  "High fraud": { clearfraudscore: 380, max_ssn_per_bank: 30, inq_30d: 30, inq_90d: 60, inq_365d: 120, leadType: "lead", identity_match: "mismatch" },
+  "Returning customer": { leadType: "express", n_prior_loans: 4, clearfraudscore: 750, apr: 450, inq_30d: 3, inq_90d: 4, inq_365d: 8 },
+};
+
 function init() {
-  loadModel().then(m => { MODEL = m; renderInputs(); recompute(); });
+  loadModel().then(m => { MODEL = m; renderChips(); renderInputs(); recompute(); });
+}
+
+function renderChips() {
+  const box = document.getElementById("chips");
+  box.innerHTML = "";
+  for (const name of Object.keys(PROFILES)) {
+    const c = document.createElement("button");
+    c.className = "chip" + (name === "Typical" ? " active" : "");
+    c.textContent = name;
+    c.dataset.profile = name;
+    c.addEventListener("click", () => applyProfile(name));
+    box.appendChild(c);
+  }
+}
+
+function applyProfile(name) {
+  const over = PROFILES[name] || {};
+  for (const [key] of Object.entries(MODEL.numeric)) {
+    if (key in over) {
+      state[key] = over[key];
+      document.getElementById(key).value = over[key];
+      document.getElementById("v_" + key).textContent = fmt(over[key]);
+    }
+  }
+  for (const [key] of Object.entries(MODEL.categorical)) {
+    if (key in over) {
+      state[key] = over[key];
+      document.getElementById(key).value = over[key];
+    }
+  }
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.profile === name));
+  recompute();
 }
 
 document.getElementById("loginBtn").addEventListener("click", tryLogin);

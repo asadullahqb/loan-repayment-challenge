@@ -33,3 +33,6 @@ Thumbs.db
 # --- Environment / secrets ---
 .env
 .env.*
+
+# --- Google Drive / Colab sync temp ---
+.tmp.driveupload/

@@ -41,13 +41,18 @@
   .fighter { position: relative; background: linear-gradient(180deg, var(--panel-2), #111a30); border: 2px solid var(--border); border-radius: 14px; padding: 18px 10px 14px; cursor: pointer; text-align: center; transition: transform .12s, border-color .15s, box-shadow .15s, background .15s; }
   .fighter:hover { border-color: var(--accent); transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 0 #0b1526, 0 0 24px rgba(34, 211, 238, 0.35); }
   .fighter.active { border-color: var(--accent); box-shadow: 0 6px 0 #0b1526, 0 0 28px rgba(34, 211, 238, 0.55); background: linear-gradient(180deg, #14304a, #111a30); }
-  .fighter .sprite { height: 84px; display: flex; align-items: flex-end; justify-content: center; animation: idle 1.6s ease-in-out infinite; }
+  .fighter .sprite { height: 92px; display: flex; align-items: flex-end; justify-content: center; animation: idle 2s ease-in-out infinite; }
   .fighter .sprite svg { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
-  .fighter:nth-child(2) .sprite { animation-delay: .2s; }
-  .fighter:nth-child(3) .sprite { animation-delay: .4s; }
-  .fighter:nth-child(4) .sprite { animation-delay: .6s; }
-  .fighter:nth-child(5) .sprite { animation-delay: .8s; }
-  @keyframes idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  .fighter:nth-child(2) .sprite { animation-delay: .25s; }
+  .fighter:nth-child(3) .sprite { animation-delay: .5s; }
+  .fighter:nth-child(4) .sprite { animation-delay: .75s; }
+  .fighter:nth-child(5) .sprite { animation-delay: 1s; }
+  @keyframes idle {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    35% { transform: translateY(-8px) scaleY(1.05); }
+    65% { transform: translateY(0) scaleY(0.95); }
+    82% { transform: translateY(-4px) scaleY(1.02); }
+  }
   .fighter .fname { font-family: 'Press Start 2P', monospace; font-size: 9px; margin-top: 12px; color: var(--text); }
   .fighter .ftag { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.35; }
   .layout {
@@ -548,7 +553,7 @@ function fighterSprite(meta) {
   else if (meta.accessory === "beanie") acc = `<rect x="9" y="4" width="30" height="8" rx="4" fill="#111827"/><rect x="8" y="11" width="32" height="3" fill="#111827"/>`;
   else if (meta.accessory === "angry") acc = `<rect x="15" y="20" width="7" height="2" fill="#111"/><rect x="26" y="20" width="7" height="2" fill="#111"/>`;
   else if (meta.accessory === "sunglasses") acc = `<rect x="13" y="22" width="22" height="6" fill="#111"/><rect x="14" y="22" width="6" height="6" fill="#334155"/>`;
-  return `<svg viewBox="0 0 48 64" width="54" height="72" shape-rendering="crispEdges">
+  return `<svg viewBox="0 0 48 64" width="62" height="82" shape-rendering="crispEdges">
     <rect x="8" y="46" width="32" height="16" fill="${meta.outfit}"/>
     <rect x="19" y="40" width="10" height="7" fill="${meta.skin}"/>
     <rect x="9" y="12" width="30" height="29" fill="${meta.skin}"/>

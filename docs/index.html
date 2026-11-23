@@ -107,6 +107,23 @@
   .bt-uplift-main strong { color: #4ade80; }
   .bt-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 700px) { .bt-grid, .bt-uplift, .bt-cols { grid-template-columns: 1fr; } }
+  .hero { padding: 20px 32px 8px; }
+  .hero-inner { background: linear-gradient(135deg, #0b3a2a, #0f2b3a); border: 1px solid #22c55e44; border-radius: 16px; padding: 28px 32px; text-align: center; }
+  .hero-big { font-size: 52px; font-weight: 800; color: #4ade80; font-variant-numeric: tabular-nums; }
+  .hero-sub { font-size: 16px; color: var(--text); margin: 6px 0 10px; }
+  .hero-sub strong { color: #4ade80; }
+  .hero-inner p { color: var(--muted); max-width: 640px; margin: 0 auto 18px; font-size: 14px; }
+  .hero-cta { background: var(--accent); color: #0f172a; border: none; padding: 10px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .chips-tag { color: var(--muted); font-size: 12px; margin: -6px 0 12px; }
+  .link-card { display: block; text-decoration: none; color: var(--text); transition: border-color .15s; }
+  .link-card:hover { border-color: var(--accent); }
+  .link-card h3 { margin: 0 0 8px; font-size: 15px; color: var(--text); }
+  .link-card p { color: var(--muted); font-size: 13px; margin: 0; }
+  .plain p { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
+  .limitations ul { margin: 0; padding-left: 18px; }
+  .limitations li { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .limitations strong { color: var(--text); }
+  .limitations code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -125,9 +142,19 @@
   <p>Adjust an applicant's attributes to see the predicted probability of default (PD) and the drivers behind it.</p>
 </header>
 
-<div class="layout">
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-big" id="heroUplift">+$493,505</div>
+    <div class="hero-sub">profit uplift vs. approving everyone &mdash; <strong id="heroPct">+171.7%</strong></div>
+    <p>The model reads each applicant's risk, prices their expected loss, and tells us who to approve &mdash; nearly tripling profit.</p>
+    <button class="hero-cta" onclick="document.getElementById('scorecard').scrollIntoView({behavior:'smooth'})">Explore the model &darr;</button>
+  </div>
+</section>
+
+<div class="layout" id="scorecard">
   <div class="card">
     <h2>Applicant attributes</h2>
+    <p class="chips-tag">Choose a pre-populated applicant profile</p>
     <div class="chips" id="chips"></div>
     <div id="inputs"></div>
   </div>
@@ -166,6 +193,37 @@
 <section class="sims">
   <h2 class="sims-title">Model backtest (economic uplift)</h2>
   <div class="card"><div id="simBacktest" class="sim-body"></div></div>
+</section>
+
+<section class="sims">
+  <h2 class="sims-title">What we did (in plain English)</h2>
+  <div class="sim-grid">
+    <div class="card plain"><h3>1. Predict who defaults</h3><p>We trained a model that scores each applicant's chance of not repaying &mdash; using only what's known at application time (fraud score, loan terms, geography, history).</p></div>
+    <div class="card plain"><h3>2. Price the loss</h3><p>We measured how much is lost on a default (LGD 88%) and how much money is at risk (EAD), turning every prediction into a dollar figure.</p></div>
+    <div class="card plain"><h3>3. Prove it makes money</h3><p>We re-ran the last cohort with and without the model. Using it to reject the riskiest ~35% nearly tripled profit.</p></div>
+  </div>
+</section>
+
+<section class="sims">
+  <h2 class="sims-title">Dive deeper (notebooks)</h2>
+  <div class="sim-grid">
+    <a class="card link-card" href="eda_1.html"><h3>EDA</h3><p>Full exploratory analysis &amp; feasibility.</p></a>
+    <a class="card link-card" href="pd_benchmark_colab.html"><h3>Model benchmark</h3><p>4-model comparison &amp; tuning.</p></a>
+    <a class="card link-card" href="notes_1.html"><h3>Notes 1</h3><p>CRISP-DM framing &amp; decisions.</p></a>
+    <a class="card link-card" href="notes_2.html"><h3>Notes 2</h3><p>Follow-up notes.</p></a>
+  </div>
+</section>
+
+<section class="sims">
+  <h2 class="sims-title">Limitations &amp; next steps</h2>
+  <div class="card plain limitations">
+    <ul>
+      <li><strong>Data limits:</strong> anonymized &mdash; no external credit bureau can join, so the model uses application-time features only.</li>
+      <li><strong>Selection bias:</strong> the cohort is already-funded loans, not all applicants &mdash; the model understates risk on the full funnel.</li>
+      <li><strong>Sample:</strong> single lender, 2014&ndash;2017 &mdash; results may not generalize across time or markets.</li>
+      <li><strong>Next:</strong> add bureau data, macro overlays, and production drift monitoring (already scaffolded in <code>tht/monitoring.py</code>).</li>
+    </ul>
+  </div>
 </section>
 
 <footer>
@@ -323,11 +381,11 @@ async function tryLogin() {
 }
 
 const PROFILES = {
-  "Prime": { clearfraudscore: 900, apr: 250, originallyScheduledPaymentAmount: 800, leadCost: 0, inq_30d: 2, inq_90d: 2, inq_365d: 4, n_prior_loans: 3, leadType: "rc_returning", identity_match: "match" },
-  "Typical": {},
-  "Subprime": { clearfraudscore: 420, apr: 660, originallyScheduledPaymentAmount: 3500, leadCost: 60, inq_30d: 20, inq_90d: 40, inq_365d: 80, leadType: "lead", identity_match: "mismatch" },
-  "High fraud": { clearfraudscore: 380, max_ssn_per_bank: 30, inq_30d: 30, inq_90d: 60, inq_365d: 120, leadType: "lead", identity_match: "mismatch" },
-  "Returning customer": { leadType: "express", n_prior_loans: 4, clearfraudscore: 750, apr: 450, inq_30d: 3, inq_90d: 4, inq_365d: 8 },
+  "Old Money": { clearfraudscore: 900, apr: 250, originallyScheduledPaymentAmount: 800, leadCost: 0, inq_30d: 2, inq_90d: 2, inq_365d: 4, n_prior_loans: 3, leadType: "rc_returning", identity_match: "match" },
+  "Main Character": {},
+  "Loyal Regular": { leadType: "express", n_prior_loans: 4, clearfraudscore: 750, apr: 450, inq_30d: 3, inq_90d: 4, inq_365d: 8 },
+  "Doom Spender": { clearfraudscore: 420, apr: 660, originallyScheduledPaymentAmount: 3500, leadCost: 60, inq_30d: 20, inq_90d: 40, inq_365d: 80, leadType: "lead", identity_match: "mismatch" },
+  "Crypto Bro": { clearfraudscore: 380, max_ssn_per_bank: 30, inq_30d: 30, inq_90d: 60, inq_365d: 120, leadType: "lead", identity_match: "mismatch" },
 };
 
 function loadSims() { return fetch("simulations.json").then(r => r.json()); }
@@ -425,6 +483,8 @@ function renderBacktest(b) {
         <div class="sim-kv"><span>Confident fraction</span><strong>${(pi.confident_fraction * 100).toFixed(1)}%</strong></div>
       </div>
     </div>`;
+  document.getElementById("heroUplift").textContent = "+$" + fmtInt(bt.uplift);
+  document.getElementById("heroPct").textContent = "+" + bt.uplift_pct + "%";
 }
 
 function init() {
@@ -442,7 +502,7 @@ function renderChips() {
   box.innerHTML = "";
   for (const name of Object.keys(PROFILES)) {
     const c = document.createElement("button");
-    c.className = "chip" + (name === "Typical" ? " active" : "");
+    c.className = "chip" + (name === "Main Character" ? " active" : "");
     c.textContent = name;
     c.dataset.profile = name;
     c.addEventListener("click", () => applyProfile(name));

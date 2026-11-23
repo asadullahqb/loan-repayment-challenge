@@ -70,10 +70,27 @@
   .driver .bar span { display: block; height: 100%; }
   .driver .contrib { width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
   .pos { color: var(--bad); } .neg { color: var(--good); }
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 100; }
+  .login-box { background: var(--panel); border: 1px solid #2b3a52; border-radius: 16px; padding: 32px; text-align: center; width: 320px; }
+  .login-box h1 { font-size: 18px; margin: 0 0 8px; }
+  .login-box p { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .login-box input { width: 100%; padding: 10px 12px; background: var(--panel-2); color: var(--text); border: 1px solid #334155; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+  .login-box button { width: 100%; padding: 10px; background: var(--accent); color: #0f172a; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .login-error { color: var(--bad); font-size: 12px; margin-top: 10px; display: none; }
   footer { padding: 8px 32px 28px; color: #64748b; font-size: 12px; }
 </style>
 </head>
 <body>
+<div class="overlay" id="overlay">
+  <div class="login-box">
+    <h1>Loan Default Risk Scorecard</h1>
+    <p>This demo is password-protected.</p>
+    <input type="password" id="password" placeholder="Enter password" autocomplete="off" />
+    <button id="loginBtn">Unlock</button>
+    <div class="login-error" id="loginError">Incorrect password &mdash; try again.</div>
+  </div>
+</div>
+
 <header>
   <h1>Loan Default Risk Scorecard <span class="badge">interactive demo</span></h1>
   <p>Adjust an applicant's attributes to see the predicted probability of default (PD) and the drivers behind it.</p>
@@ -241,7 +258,36 @@ function colorFor(pd) {
   return "var(--bad)";
 }
 
-loadModel().then(m => { MODEL = m; renderInputs(); recompute(); });
+const PASS_HASH = "cb4008d293b9eb48e6af5153e8cb7c0a6027aa37d01bb2ea73e34581d5650820";
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function tryLogin() {
+  const pw = document.getElementById("password").value;
+  const hash = await sha256(pw);
+  if (hash === PASS_HASH) {
+    sessionStorage.setItem("tht_auth", "1");
+    document.getElementById("overlay").style.display = "none";
+    init();
+  } else {
+    document.getElementById("loginError").style.display = "block";
+  }
+}
+
+function init() {
+  loadModel().then(m => { MODEL = m; renderInputs(); recompute(); });
+}
+
+document.getElementById("loginBtn").addEventListener("click", tryLogin);
+document.getElementById("password").addEventListener("keydown", (e) => { if (e.key === "Enter") tryLogin(); });
+
+if (sessionStorage.getItem("tht_auth") === "1") {
+  document.getElementById("overlay").style.display = "none";
+  init();
+}
 </script>
 </body>
 </html>

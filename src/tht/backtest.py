@@ -118,7 +118,7 @@ def run_backtest(loan, payment, clarity, n_sims=5000, n_bootstrap=25, seed=42):
         p = _profit(mask, interest, cost, loss, defaulted)
         curve[round(float(T), 2)] = round(p, 0)
         if p > best_profit:
-            best_profit, best_threshold = p, float(T)
+            best_profit, best_threshold = p, round(float(T), 2)
 
     uplift = best_profit - approve_all
 

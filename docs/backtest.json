@@ -1,0 +1,52 @@
+{
+  "split": {
+    "train": 17114,
+    "validation": 5705,
+    "test": 5705
+  },
+  "best_model": "hist_gbm",
+  "validation_auc": {
+    "hist_gbm": 0.724,
+    "lightgbm": 0.723,
+    "logistic": 0.717,
+    "xgboost": 0.709
+  },
+  "test_auc": 0.72,
+  "test_ks": 0.327,
+  "lgd": 0.878,
+  "recovery_rate": 0.122,
+  "backtest": {
+    "approve_all_profit": 287468.0,
+    "best_threshold": 0.65,
+    "best_profit": 780972.0,
+    "uplift": 493505.0,
+    "uplift_pct": 171.7,
+    "threshold_curve": {
+      "0.3": 198649.0,
+      "0.35": 295110.0,
+      "0.4": 437980.0,
+      "0.45": 550679.0,
+      "0.5": 646426.0,
+      "0.55": 712941.0,
+      "0.6": 745793.0,
+      "0.65": 780972.0,
+      "0.7": 751911.0,
+      "0.75": 689128.0,
+      "0.8": 569444.0,
+      "0.85": 409374.0,
+      "0.9": 321675.0,
+      "0.95": 287917.0
+    }
+  },
+  "synthetic_population": {
+    "n": 5000,
+    "expected_profit": 195559.0,
+    "p5": 85740.0,
+    "p95": 306949.0,
+    "expected_default_rate": 0.605
+  },
+  "prediction_interval": {
+    "mean_width": 0.208,
+    "confident_fraction": 0.279
+  }
+}

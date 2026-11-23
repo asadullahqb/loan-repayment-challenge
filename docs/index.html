@@ -97,6 +97,16 @@
   .sim-row span:last-child { font-variant-numeric: tabular-nums; }
   .sim-row.head span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
   .sim-sub { margin-top: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+  .bt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .bt-cell { background: var(--panel-2); border-radius: 10px; padding: 12px; }
+  .bt-label { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 4px; }
+  .bt-cell strong, .bt-uplift strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+  .bt-uplift { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .bt-uplift > div { background: var(--panel-2); border-radius: 10px; padding: 12px; }
+  .bt-uplift-main { background: #0b3a2a !important; border: 1px solid #22c55e55; }
+  .bt-uplift-main strong { color: #4ade80; }
+  .bt-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .bt-grid, .bt-uplift, .bt-cols { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -151,6 +161,11 @@
     <div class="card"><h3>IFRS-9 expected credit loss</h3><div id="simEcl" class="sim-body"></div></div>
     <div class="card"><h3>Markov migration</h3><div id="simMarkov" class="sim-body"></div></div>
   </div>
+</section>
+
+<section class="sims">
+  <h2 class="sims-title">Model backtest (economic uplift)</h2>
+  <div class="card"><div id="simBacktest" class="sim-body"></div></div>
 </section>
 
 <footer>
@@ -371,13 +386,54 @@ function renderSims() {
   renderMarkov(SIMS.markov);
 }
 
+function loadBacktest() { return fetch("backtest.json").then(r => r.json()); }
+
+function fmtInt(n) { return Math.round(n).toLocaleString(); }
+
+function renderBacktest(b) {
+  const bt = b.backtest;
+  const sp = b.synthetic_population;
+  const pi = b.prediction_interval;
+  const curveRows = Object.entries(bt.threshold_curve).map(([t, p]) =>
+    `<div class="sim-row"><span>PD &lt; ${t}</span><span>$${fmtInt(p)}</span></div>`
+  ).join("");
+  document.getElementById("simBacktest").innerHTML = `
+    <div class="bt-grid">
+      <div class="bt-cell"><span class="bt-label">Best model</span><strong>${b.best_model}</strong></div>
+      <div class="bt-cell"><span class="bt-label">Validation AUC</span><strong>${b.validation_auc[b.best_model]}</strong></div>
+      <div class="bt-cell"><span class="bt-label">Test AUC</span><strong>${b.test_auc}</strong></div>
+      <div class="bt-cell"><span class="bt-label">Test KS</span><strong>${b.test_ks}</strong></div>
+    </div>
+    <div class="bt-uplift">
+      <div><span class="bt-label">Approve-all profit</span><strong>$${fmtInt(bt.approve_all_profit)}</strong></div>
+      <div><span class="bt-label">Best threshold</span><strong>PD &lt; ${Number(bt.best_threshold).toFixed(2)}</strong></div>
+      <div><span class="bt-label">Best profit</span><strong>$${fmtInt(bt.best_profit)}</strong></div>
+      <div class="bt-uplift-main"><span class="bt-label">Uplift</span><strong>+$${fmtInt(bt.uplift)} (${bt.uplift_pct}%)</strong></div>
+    </div>
+    <div class="bt-cols">
+      <div>
+        <div class="sim-sub">Profit by approval threshold</div>
+        <div class="sim-table">${curveRows}</div>
+      </div>
+      <div>
+        <div class="sim-sub">Synthetic population (${sp.n} applicants)</div>
+        <div class="sim-kv"><span>Expected profit</span><strong>$${fmtInt(sp.expected_profit)}</strong></div>
+        <div class="sim-kv"><span>Profit 5–95%</span><strong>$${fmtInt(sp.p5)} – $${fmtInt(sp.p95)}</strong></div>
+        <div class="sim-kv"><span>Expected default</span><strong>${(sp.expected_default_rate * 100).toFixed(1)}%</strong></div>
+        <div class="sim-sub">Prediction interval (bootstrap)</div>
+        <div class="sim-kv"><span>Mean width</span><strong>${pi.mean_width.toFixed(3)}</strong></div>
+        <div class="sim-kv"><span>Confident fraction</span><strong>${(pi.confident_fraction * 100).toFixed(1)}%</strong></div>
+      </div>
+    </div>`;
+}
+
 function init() {
-  Promise.all([loadModel(), loadSims()]).then(([m, s]) => {
+  Promise.all([loadModel(), loadSims(), loadBacktest()]).then(([m, s, b]) => {
     MODEL = m;
     SIMS = s;
     LGD = s.ifrs9.lgd;
     document.getElementById("lgd").textContent = Math.round(LGD * 100) + "%";
-    renderChips(); renderInputs(); renderSims(); recompute();
+    renderChips(); renderInputs(); renderSims(); renderBacktest(b); recompute();
   });
 }
 

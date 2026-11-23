@@ -309,18 +309,17 @@ function renderChips() {
 
 function applyProfile(name) {
   const over = PROFILES[name] || {};
-  for (const [key] of Object.entries(MODEL.numeric)) {
-    if (key in over) {
-      state[key] = over[key];
-      document.getElementById(key).value = over[key];
-      document.getElementById("v_" + key).textContent = fmt(over[key]);
-    }
+  // Reset every control to its default, then apply the profile's overrides.
+  for (const [key, f] of Object.entries(MODEL.numeric)) {
+    const val = (key in over) ? over[key] : f.default;
+    state[key] = val;
+    document.getElementById(key).value = val;
+    document.getElementById("v_" + key).textContent = fmt(val);
   }
-  for (const [key] of Object.entries(MODEL.categorical)) {
-    if (key in over) {
-      state[key] = over[key];
-      document.getElementById(key).value = over[key];
-    }
+  for (const [key, f] of Object.entries(MODEL.categorical)) {
+    const val = (key in over) ? over[key] : f.default;
+    state[key] = val;
+    document.getElementById(key).value = val;
   }
   document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.profile === name));
   recompute();

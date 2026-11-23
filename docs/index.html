@@ -3,44 +3,61 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Loan Default Risk Scorecard</title>
+<title>Credit Scoring: The Game — MoneyLion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #070b14;
-    --panel: rgba(19, 28, 51, 0.72);
-    --panel-2: #1a2542;
-    --text: #eaf0ff;
-    --muted: #8fa0c8;
-    --accent: #22d3ee;
-    --accent2: #e879f9;
+    --bg: #140a1c;
+    --panel: rgba(30, 18, 44, 0.72);
+    --panel-2: #241630;
+    --text: #fff1f7;
+    --muted: #c9a9c4;
+    --accent: #ff5fd0;
+    --accent2: #ffb84d;
     --good: #34d399;
     --warn: #fbbf24;
     --bad: #fb7185;
-    --border: #22304f;
+    --border: #4a2450;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background:
-      radial-gradient(1100px 600px at 12% -8%, #16294f 0%, transparent 55%),
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(255, 95, 208, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 95, 208, 0.04) 1px, transparent 1px),
+      radial-gradient(1100px 600px at 12% -8%, #4a1440 0%, transparent 55%),
       radial-gradient(900px 500px at 100% 0%, #3a1247 0%, transparent 50%),
-      var(--bg);
+      radial-gradient(900px 600px at 50% 115%, #5a2a10 0%, transparent 55%);
+    background-size: 44px 44px, 44px 44px, auto, auto, auto;
+    background-attachment: fixed;
     color: var(--text);
     line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
+  ::selection { background: rgba(255, 95, 208, 0.35); color: #fff; }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: #0a1120; }
+  ::-webkit-scrollbar-thumb { background: #22304f; border-radius: 999px; border: 2px solid #0a1120; }
+  ::-webkit-scrollbar-thumb:hover { background: #2f4a7a; }
   .game-font { font-family: 'Press Start 2P', monospace; letter-spacing: .02em; line-height: 1.5; }
-  header { padding: 28px 32px 14px; border-bottom: 1px solid var(--border); }
-  header h1 { margin: 0; font-family: 'Press Start 2P', monospace; font-size: 18px; line-height: 1.6; color: var(--text); text-shadow: 0 0 14px rgba(34, 211, 238, 0.5); }
-  header p { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
-  .badge { display: inline-block; margin-left: 10px; padding: 4px 10px; border-radius: 6px; font-size: 9px; font-family: 'Press Start 2P', monospace; background: #0b3a54; color: var(--accent); border: 1px solid var(--accent); box-shadow: 0 0 10px rgba(34, 211, 238, 0.3); vertical-align: middle; }
+  header { position: relative; padding: 30px 32px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(20, 34, 64, 0.55), transparent); }
+  header h1 { margin: 0; font-family: 'Press Start 2P', monospace; font-size: 22px; line-height: 1.5; color: #fff; text-shadow: 0 0 18px rgba(255, 95, 208, 0.65), 0 3px 0 rgba(0, 0, 0, 0.35); }
+  header p { margin: 12px 0 0; color: var(--muted); font-size: 14px; max-width: 760px; }
+  .badge { display: inline-block; margin-left: 12px; padding: 5px 11px; border-radius: 6px; font-size: 8px; font-family: 'Press Start 2P', monospace; background: #3a0b33; color: var(--accent); border: 1px solid var(--accent); box-shadow: 0 0 14px rgba(255, 95, 208, 0.35); vertical-align: middle; text-shadow: none; }
   .fighters { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
-  .fighter { position: relative; background: linear-gradient(180deg, var(--panel-2), #111a30); border: 2px solid var(--border); border-radius: 14px; padding: 18px 10px 14px; cursor: pointer; text-align: center; transition: transform .12s, border-color .15s, box-shadow .15s, background .15s; }
-  .fighter:hover { border-color: var(--accent); transform: translateY(-4px) scale(1.02); box-shadow: 0 8px 0 #0b1526, 0 0 24px rgba(34, 211, 238, 0.35); }
-  .fighter.active { border-color: var(--accent); box-shadow: 0 6px 0 #0b1526, 0 0 28px rgba(34, 211, 238, 0.55); background: linear-gradient(180deg, #14304a, #111a30); }
+  .fighter { position: relative; overflow: hidden; background: linear-gradient(180deg, #2a1738, #151022); border: 2px solid var(--border); border-top: 3px solid var(--pc, var(--accent)); border-radius: 14px; padding: 20px 10px 16px; cursor: pointer; text-align: center; transition: transform .12s ease, border-color .15s, box-shadow .15s, background .15s; }
+  .fighter::before { content: ""; position: absolute; top: 0; left: -80%; width: 60%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.08), transparent); transform: skewX(-20deg); transition: left .5s ease; pointer-events: none; }
+  .fighter:hover::before { left: 130%; }
+  .fighter:hover { border-color: var(--pc, var(--accent)); transform: translateY(-5px) scale(1.03); box-shadow: 0 10px 0 #0b1526, 0 0 26px rgba(255, 95, 208, 0.4); }
+  .fighter.active { border-color: var(--pc, var(--accent)); box-shadow: 0 8px 0 #0b1526, 0 0 30px rgba(255, 95, 208, 0.6); background: linear-gradient(180deg, #3a1430, #151022); }
+  .fighter.active::after { content: "SELECTED"; position: absolute; top: 8px; right: 8px; font-family: 'Press Start 2P', monospace; font-size: 6px; color: #0a0612; background: var(--pc, var(--accent)); padding: 3px 6px; border-radius: 4px; }
+  .heat { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 9px; }
+  .heat-label { font-family: 'Press Start 2P', monospace; font-size: 6px; color: var(--muted); letter-spacing: .05em; }
+  .stars { font-size: 11px; letter-spacing: 1px; color: var(--pc, var(--accent)); text-shadow: 0 0 8px rgba(255, 95, 208, 0.5); }
   .fighter .sprite { height: 92px; display: flex; align-items: flex-end; justify-content: center; animation: idle 2s ease-in-out infinite; }
   .fighter .sprite svg { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
   .fighter:nth-child(2) .sprite { animation-delay: .25s; }
@@ -63,29 +80,35 @@
   }
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
   .card {
-    background: var(--panel);
+    background: linear-gradient(180deg, rgba(25, 37, 66, 0.85), rgba(13, 20, 38, 0.92));
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 22px;
-    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(8px);
   }
-  .card h2 { margin: 0 0 16px; font-size: 13px; font-family: 'Press Start 2P', monospace; letter-spacing: .04em; color: var(--accent); text-transform: uppercase; }
+  .card h2 { margin: 0 0 16px; font-size: 13px; font-family: 'Press Start 2P', monospace; letter-spacing: .04em; color: var(--accent); text-transform: uppercase; text-shadow: 0 0 12px rgba(255, 95, 208, 0.4); }
   .field { margin-bottom: 16px; }
   .field label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text); margin-bottom: 6px; }
   .field label span.val { color: var(--accent); font-variant-numeric: tabular-nums; }
-  input[type=range] { width: 100%; accent-color: var(--accent); }
-  select { width: 100%; padding: 8px 10px; background: var(--panel-2); color: var(--text); border: 1px solid #334155; border-radius: 8px; font-size: 14px; }
+  input[type=range] { width: 100%; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: #0b1220; border: 1px solid #22304f; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 3px solid #06121f; box-shadow: 0 0 10px rgba(255, 95, 208, 0.6); margin-top: -6px; cursor: pointer; }
+  input[type=range]::-moz-range-track { height: 6px; border-radius: 999px; background: #0b1220; border: 1px solid #22304f; }
+  input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); border: 3px solid #06121f; box-shadow: 0 0 10px rgba(255, 95, 208, 0.6); cursor: pointer; }
+  select { width: 100%; padding: 9px 10px; background: #101a30; color: var(--text); border: 1px solid #334155; border-radius: 8px; font-size: 14px; outline: none; }
+  select:focus, .login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255, 95, 208, 0.2); }
   .pd-wrap { text-align: center; padding: 8px 0 4px; }
-  .pd-value { font-family: 'Press Start 2P', monospace; font-size: 38px; font-variant-numeric: tabular-nums; text-shadow: 0 0 26px rgba(34, 211, 238, 0.45); }
+  .pd-value { font-family: 'Press Start 2P', monospace; font-size: 38px; font-variant-numeric: tabular-nums; text-shadow: 0 0 26px rgba(255, 95, 208, 0.45); }
   .pd-label { color: var(--muted); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
-  .gauge { height: 22px; background: #0b1220; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; margin: 18px 0 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6); }
-  .gauge-fill { height: 100%; width: 0%; border-radius: 5px; transition: width .25s ease, background .25s ease; }
+  .gauge { height: 22px; background: repeating-linear-gradient(90deg, transparent 0 9.5%, rgba(255, 255, 255, 0.05) 9.5% 10%), #0b1220; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; margin: 18px 0 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6); }
+  .gauge-fill { height: 100%; width: 0%; border-radius: 5px; transition: width .3s cubic-bezier(.22, 1, .36, 1), background .3s ease; }
   .scale { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
-  .band { margin-top: 16px; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; border: 1px solid; }
-  .band.low { background: #052e16; color: #4ade80; border-color: #22c55e55; }
-  .band.mid { background: #3a2a05; color: #fbbf24; border-color: #f59e0b55; }
-  .band.high { background: #3b0d0d; color: #fb7185; border-color: #ef444455; }
+  .band { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-weight: 700; font-size: 14px; border: 1px solid; letter-spacing: .01em; }
+  .band.low { background: #052e16; color: #4ade80; border-color: #22c55e55; box-shadow: 0 0 18px rgba(74, 222, 128, 0.18); }
+  .band.mid { background: #3a2a05; color: #fbbf24; border-color: #f59e0b55; box-shadow: 0 0 18px rgba(251, 191, 36, 0.16); }
+  .band.high { background: #3b0d0d; color: #fb7185; border-color: #ef444455; box-shadow: 0 0 18px rgba(251, 113, 133, 0.2); animation: band-shake .4s ease; }
+  @keyframes band-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
   .el { margin-top: 16px; text-align: left; }
   .el .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2b3a52; font-size: 13px; }
   .drivers { margin-top: 18px; }
@@ -96,16 +119,23 @@
   .driver .bar span { display: block; height: 100%; }
   .driver .contrib { width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
   .pos { color: var(--bad); } .neg { color: var(--good); }
-  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 100; }
-  .login-box { background: var(--panel); border: 1px solid #2b3a52; border-radius: 16px; padding: 32px; text-align: center; width: 320px; }
-  .login-box h1 { font-size: 18px; margin: 0 0 8px; }
-  .login-box p { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
-  .login-box input { width: 100%; padding: 10px 12px; background: var(--panel-2); color: var(--text); border: 1px solid #334155; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
-  .login-box button { width: 100%; padding: 10px; background: var(--accent); color: #0f172a; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
-  .login-error { color: var(--bad); font-size: 12px; margin-top: 10px; display: none; }
+  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(900px 500px at 50% 18%, #16294f, #070b14); z-index: 100; }
+  .login-box { background: linear-gradient(180deg, rgba(25, 37, 66, 0.96), rgba(13, 20, 38, 0.98)); border: 1px solid #2b3a52; border-radius: 18px; padding: 36px 32px; text-align: center; width: 340px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 95, 208, 0.12); }
+  .login-box h1 { font-family: 'Press Start 2P', monospace; font-size: 16px; line-height: 1.6; margin: 0 0 10px; color: #fff; text-shadow: 0 0 18px rgba(255, 95, 208, 0.6); }
+  .login-box p { color: var(--muted); font-size: 13px; margin: 0 0 20px; }
+  .login-box input { width: 100%; padding: 12px; background: #101a30; color: var(--text); border: 1px solid #334155; border-radius: 8px; font-size: 14px; margin-bottom: 14px; outline: none; }
+  .login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), #ffb84d); color: #06121f; border: none; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 0 #8a0b6f, 0 0 16px rgba(255, 95, 208, 0.4); transition: transform .08s, box-shadow .08s; }
+  .login-box button:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #8a0b6f, 0 0 22px rgba(255, 95, 208, 0.55); }
+  .login-box button:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a0b6f; }
+  .login-error { color: var(--bad); font-size: 12px; margin-top: 12px; display: none; }
   footer { padding: 8px 32px 28px; color: #64748b; font-size: 12px; }
+  .credits { padding: 0 32px 44px; text-align: center; font-size: 15px; color: var(--text); }
+  .credits strong { color: var(--accent2); text-shadow: 0 0 12px rgba(255, 184, 77, 0.5); }
+  .music-btn { position: fixed; bottom: 18px; right: 18px; z-index: 90; font-family: 'Press Start 2P', monospace; font-size: 9px; background: var(--panel-2); color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 11px 13px; cursor: pointer; box-shadow: 0 0 16px rgba(255, 95, 208, 0.3); transition: transform .08s, box-shadow .08s; }
+  .music-btn:hover { transform: translateY(-2px); box-shadow: 0 0 22px rgba(255, 95, 208, 0.5); }
+  .music-btn.on { color: #0a0612; background: var(--accent); }
   .sims { padding: 8px 32px 32px; }
-  .sims-title { font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--accent); margin: 0 0 18px; letter-spacing: .02em; text-shadow: 0 0 10px rgba(34, 211, 238, 0.4); }
+  .sims-title { font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--accent); margin: 0 0 18px; letter-spacing: .02em; text-shadow: 0 0 10px rgba(255, 95, 208, 0.4); }
   .sim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   @media (max-width: 1000px) { .sim-grid { grid-template-columns: 1fr; } }
   .sim-grid .card h3 { margin: 0 0 14px; font-size: 14px; color: var(--text); }
@@ -118,6 +148,20 @@
   .sim-row span:first-child { color: var(--muted); }
   .sim-row span:last-child { font-variant-numeric: tabular-nums; }
   .sim-row.head span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  .sim-big { font-family: 'Press Start 2P', monospace; font-size: 20px; color: var(--accent); text-shadow: 0 0 14px rgba(255, 95, 208, 0.5); margin: 4px 0 2px; }
+  .sim-big-label { font-size: 11px; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .03em; }
+  .hbar { display: grid; grid-template-columns: 118px 1fr 68px; align-items: center; gap: 10px; padding: 4px 0; }
+  .hbar .hb-label { color: var(--muted); font-size: 12px; }
+  .hbar .hb-track { height: 10px; background: #0b1220; border-radius: 999px; overflow: hidden; }
+  .hbar .hb-fill { height: 100%; border-radius: 999px; }
+  .hbar .hb-val { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text); }
+  .vchart { display: flex; align-items: flex-end; gap: 5px; height: 132px; }
+  .vbar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .vb-fill { width: 100%; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--accent), var(--accent2)); box-shadow: 0 0 10px rgba(255, 95, 208, 0.3); }
+  .vb-tick { font-size: 9px; color: var(--muted); margin-top: 5px; }
+  .heatmap { display: grid; gap: 3px; margin-top: 8px; }
+  .hm-head { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .02em; padding: 2px; }
+  .hm-cell { padding: 8px 4px; text-align: center; font-variant-numeric: tabular-nums; font-size: 11px; border-radius: 6px; color: var(--text); }
   .sim-sub { margin-top: 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
   .bt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
   .bt-cell { background: var(--panel-2); border-radius: 10px; padding: 12px; }
@@ -130,17 +174,37 @@
   .bt-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 700px) { .bt-grid, .bt-uplift, .bt-cols { grid-template-columns: 1fr; } }
   .hero { padding: 24px 32px 8px; }
-  .hero-inner { position: relative; background: linear-gradient(135deg, #0b2b2a, #24143a); border: 1px solid var(--border); border-radius: 18px; padding: 34px 32px; text-align: center; box-shadow: 0 0 40px rgba(34, 211, 238, 0.08), inset 0 0 60px rgba(34, 211, 238, 0.04); }
+  .hero-inner { position: relative; overflow: hidden; background: linear-gradient(135deg, #3a1430, #24143a); border: 1px solid var(--border); border-radius: 18px; padding: 34px 32px; text-align: center; box-shadow: 0 0 40px rgba(255, 95, 208, 0.08), inset 0 0 60px rgba(255, 95, 208, 0.04); }
   .hero-big { font-family: 'Press Start 2P', monospace; font-size: 34px; color: #4ade80; text-shadow: 0 0 22px rgba(74, 222, 128, 0.6); }
   .hero-sub { font-size: 17px; color: var(--text); margin: 14px 0 12px; }
   .hero-sub strong { color: #4ade80; text-shadow: 0 0 12px rgba(74, 222, 128, 0.5); }
   .hero-inner p { color: var(--muted); max-width: 640px; margin: 0 auto 20px; font-size: 14px; }
-  .hero-cta { font-family: 'Press Start 2P', monospace; font-size: 11px; background: linear-gradient(135deg, var(--accent), #0ea5e9); color: #06121f; border: none; padding: 14px 22px; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #0b6f8a, 0 0 18px rgba(34, 211, 238, 0.4); transition: transform .08s, box-shadow .08s; }
-  .hero-cta:active { transform: translateY(4px); box-shadow: 0 0 12px rgba(34, 211, 238, 0.4); }
-  .chips-tag { color: var(--muted); font-size: 12px; margin: -2px 0 14px; }
-  .vs-title { font-family: 'Press Start 2P', monospace; font-size: 14px; text-align: center; color: var(--accent2); margin: 0 0 6px; text-shadow: 0 0 14px rgba(232, 121, 249, 0.55); letter-spacing: .06em; }
-  .link-card { display: block; text-decoration: none; color: var(--text); transition: border-color .15s; }
-  .link-card:hover { border-color: var(--accent); }
+  .hero-cta { font-family: 'Press Start 2P', monospace; font-size: 11px; background: linear-gradient(135deg, var(--accent), #ffb84d); color: #06121f; border: none; padding: 14px 22px; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #8a0b6f, 0 0 18px rgba(255, 95, 208, 0.4); transition: transform .08s, box-shadow .08s; }
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #8a0b6f, 0 0 26px rgba(255, 95, 208, 0.6); }
+  .hero-cta:active { transform: translateY(4px); box-shadow: 0 0 12px rgba(255, 95, 208, 0.4); }
+  .hero-label { font-family: 'Press Start 2P', monospace; font-size: 10px; color: var(--accent); letter-spacing: .1em; margin-bottom: 16px; }
+  .hero-live { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 16px 0 6px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .hero-live .live-stats { font-variant-numeric: tabular-nums; }
+  .hero-live b { color: var(--text); }
+  .live-dot { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; display: inline-block; animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); } 50% { opacity: 0.4; box-shadow: 0 0 0 7px rgba(74, 222, 128, 0); } }
+  .hero-feed { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; max-width: 780px; min-height: 26px; margin: 14px auto 0; }
+  .feed-chip { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-variant-numeric: tabular-nums; animation: chip-in .3s ease-out both; }
+  .feed-chip.ok { background: #0b3a2a; color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35); }
+  .feed-chip.no { background: #3a1220; color: #fb7185; border: 1px solid rgba(251, 113, 133, 0.35); }
+  .feed-chip.done { background: #24143a; color: #ffb84d; border: 1px solid rgba(255, 184, 77, 0.35); }
+  @keyframes chip-in { from { transform: translateY(-8px) scale(0.85); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+  .particle { position: absolute; pointer-events: none; font-family: 'Press Start 2P', monospace; font-size: 13px; z-index: 5; will-change: transform, opacity; }
+  .particle.cure { color: #4ade80; text-shadow: 0 0 12px rgba(74, 222, 128, 0.85); animation: float-up 1.15s ease-out forwards; }
+  .particle.purge { color: #fb7185; text-shadow: 0 0 12px rgba(251, 113, 133, 0.85); animation: burst .7s ease-out forwards; }
+  @keyframes float-up { 0% { transform: translateY(0) scale(.6) rotate(0deg); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-110px) scale(1.35) rotate(40deg); opacity: 0; } }
+  @keyframes burst { 0% { transform: scale(.3); opacity: 0; } 35% { transform: scale(1.6); opacity: 1; } 100% { transform: scale(.55) translateY(12px); opacity: 0; } }
+  .hero-inner::after { content: ""; position: absolute; inset: 0; border-radius: 18px; pointer-events: none; background: linear-gradient(100deg, transparent 30%, rgba(255, 95, 208, 0.08) 45%, rgba(255, 184, 77, 0.08) 55%, transparent 70%); background-size: 220% 100%; animation: scan 3s linear infinite; }
+  @keyframes scan { 0% { background-position: 180% 0; } 100% { background-position: -80% 0; } }
+  .chips-tag { color: var(--muted); font-size: 12px; margin: -2px 0 14px; text-align: center; }
+  .card .vs-title { font-family: 'Press Start 2P', monospace; font-size: 14px; text-align: center; color: var(--accent2); margin: 0 0 10px; text-shadow: 0 0 14px rgba(255, 184, 77, 0.55); letter-spacing: .06em; }
+  .link-card { display: block; text-decoration: none; color: var(--text); transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .link-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 95, 208, 0.2); }
   .link-card h3 { margin: 0 0 8px; font-size: 15px; color: var(--text); }
   .link-card p { color: var(--muted); font-size: 13px; margin: 0; }
   .plain p { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
@@ -153,7 +217,7 @@
 <body>
 <div class="overlay" id="overlay">
   <div class="login-box">
-    <h1>Loan Default Risk Scorecard</h1>
+    <h1>Credit Scoring: The Game</h1>
     <p>This demo is password-protected.</p>
     <input type="password" id="password" placeholder="Enter password" autocomplete="off" />
     <button id="loginBtn">Unlock</button>
@@ -162,24 +226,29 @@
 </div>
 
 <header>
-  <h1>Loan Default Risk Scorecard <span class="badge">interactive demo</span></h1>
-  <p>Adjust an applicant's attributes to see the predicted probability of default (PD) and the drivers behind it.</p>
+  <h1>Credit Scoring: The Game <span class="badge">interactive demo</span></h1>
+  <p>I have no money to play GTA 6, so I made a game where you and I can play it together &mdash; and learn about credit scoring for MoneyLion.</p>
 </header>
 
 <section class="hero">
   <div class="hero-inner">
-    <div class="hero-big" id="heroUplift">+$493,505</div>
-    <div class="hero-sub">profit uplift vs. approving everyone &mdash; <strong id="heroPct">+171.7%</strong></div>
-    <p>The model reads each applicant's risk, prices their expected loss, and tells us who to approve &mdash; nearly tripling profit.</p>
+    <div class="hero-label">PROFIT GENERATED &middot; LIVE</div>
+    <div class="hero-big" id="heroProfit">$0</div>
+    <div class="hero-sub">model deciding who to approve &mdash; <strong id="heroPct">+171.7%</strong> uplift vs approve-all</div>
+    <div class="hero-live">
+      <span class="live-dot"></span>
+      <span id="heroStatus">Reviewing applicants&hellip;</span>
+      <span class="live-stats">Reviewed <b id="liveReviewed">0</b> &middot; Approved <b id="liveApproved">0</b> &middot; Rejected <b id="liveRejected">0</b></span>
+    </div>
+    <div class="hero-feed" id="heroFeed" aria-hidden="true"></div>
     <button class="hero-cta" onclick="document.getElementById('scorecard').scrollIntoView({behavior:'smooth'})">Explore the model &darr;</button>
   </div>
 </section>
 
 <div class="layout" id="scorecard">
   <div class="card">
-    <h2>Applicant attributes</h2>
-    <h3 class="vs-title">SELECT YOUR FIGHTER</h3>
-    <p class="chips-tag">Choose a pre-populated applicant profile</p>
+    <h2 class="vs-title">CHOOSE YOUR CHARACTER</h2>
+    <p class="chips-tag">Pick a pre-populated applicant profile &mdash; it auto-fills the attributes below</p>
     <div class="fighters" id="chips"></div>
     <div id="inputs"></div>
   </div>
@@ -255,6 +324,10 @@
   Logistic-regression scorecard (AUC 0.706 on holdout) trained on application-time features only — no post-origination leakage.
   For illustration only; not financial advice. Cohort baseline default rate ≈ 60%.
 </footer>
+
+<div class="credits">Please fund my GTA 6 dreams by hiring me &mdash; or else my wife will be sad that I'm not playing GTA 6 with her. <strong>:(</strong></div>
+
+<button class="music-btn" id="musicBtn" onclick="toggleMusic()" aria-label="Toggle music">🔊 MUSIC</button>
 
 <script>
 let LGD = 0.75;
@@ -400,17 +473,16 @@ async function tryLogin() {
     sessionStorage.setItem("tht_auth", "1");
     document.getElementById("overlay").style.display = "none";
     init();
-    announce();
   } else {
     document.getElementById("loginError").style.display = "block";
   }
 }
 
 const PROFILES = {
-  "Old Money": { clearfraudscore: 900, apr: 250, originallyScheduledPaymentAmount: 800, leadCost: 0, inq_30d: 2, inq_90d: 2, inq_365d: 4, n_prior_loans: 3, leadType: "rc_returning", identity_match: "match" },
-  "Main Character": {},
-  "Loyal Regular": { leadType: "express", n_prior_loans: 4, clearfraudscore: 750, apr: 450, inq_30d: 3, inq_90d: 4, inq_365d: 8 },
-  "Doom Spender": { clearfraudscore: 420, apr: 660, originallyScheduledPaymentAmount: 3500, leadCost: 60, inq_30d: 20, inq_90d: 40, inq_365d: 80, leadType: "lead", identity_match: "mismatch" },
+  "Vice Tycoon": { clearfraudscore: 900, apr: 250, originallyScheduledPaymentAmount: 800, leadCost: 0, inq_30d: 2, inq_90d: 2, inq_365d: 4, n_prior_loans: 3, leadType: "rc_returning", identity_match: "match" },
+  "Lucia": { leadType: "express", n_prior_loans: 4, clearfraudscore: 750, apr: 450, inq_30d: 3, inq_90d: 4, inq_365d: 8 },
+  "Jason": {},
+  "High Roller": { clearfraudscore: 420, apr: 660, originallyScheduledPaymentAmount: 3500, leadCost: 60, inq_30d: 20, inq_90d: 40, inq_365d: 80, leadType: "lead", identity_match: "mismatch" },
   "Crypto Bro": { clearfraudscore: 380, max_ssn_per_bank: 30, inq_30d: 30, inq_90d: 60, inq_365d: 120, leadType: "lead", identity_match: "mismatch" },
 };
 
@@ -422,46 +494,51 @@ function fmtMoney(n) {
   return "$" + Math.round(n).toLocaleString();
 }
 
+function bar(label, value, max, color, valText) {
+  const w = Math.max(0, Math.min(100, (value / max) * 100));
+  return `<div class="hbar"><span class="hb-label">${label}</span><span class="hb-track"><span class="hb-fill" style="width:${w}%;background:${color}"></span></span><span class="hb-val">${valText}</span></div>`;
+}
+
 function renderProfit(p) {
+  const lgd = p.lgd * 100, rec = p.recovery_rate * 100, ploss = p.prob_loss * 100;
   document.getElementById("simProfit").innerHTML = `
-    <div class="sim-kv"><span>Expected profit</span><strong>${fmtMoney(p.expected_profit)}</strong></div>
-    <div class="sim-kv"><span>Portfolio</span><strong>${p.n_loans.toLocaleString()} loans</strong></div>
-    <div class="sim-kv"><span>Loss given default</span><strong>${(p.lgd * 100).toFixed(1)}%</strong></div>
-    <div class="sim-kv"><span>Recovery rate</span><strong>${(p.recovery_rate * 100).toFixed(1)}%</strong></div>
-    <div class="sim-kv"><span>Profit (5–95% range)</span><strong>${fmtMoney(p.p5_profit)} – ${fmtMoney(p.p95_profit)}</strong></div>
-    <div class="sim-kv"><span>P(portfolio loss)</span><strong>${(p.prob_loss * 100).toFixed(1)}%</strong></div>`;
+    <div class="sim-big">${fmtMoney(p.expected_profit)}</div>
+    <div class="sim-big-label">expected profit · ${p.n_loans.toLocaleString()} loans</div>
+    ${bar("Loss given default", lgd, 100, "var(--bad)", lgd.toFixed(1) + "%")}
+    ${bar("Recovery rate", rec, 100, "var(--good)", rec.toFixed(1) + "%")}
+    ${bar("P(portfolio loss)", ploss, 100, "var(--warn)", ploss.toFixed(1) + "%")}
+    <div class="sim-kv"><span>Profit (5–95%)</span><strong>${fmtMoney(p.p5_profit)} – ${fmtMoney(p.p95_profit)}</strong></div>`;
 }
 
 function renderEcl(e) {
   const s = e.scenario_ecl;
+  const max = Math.max(s.baseline, s.upside, s.downside) || 1;
   document.getElementById("simEcl").innerHTML = `
-    <div class="sim-kv"><span>Weighted ECL</span><strong>$${e.weighted_ecl.toFixed(2)}</strong></div>
-    <div class="sim-kv"><span>% of EAD</span><strong>${e.weighted_ecl_pct_of_ead.toFixed(1)}%</strong></div>
-    <div class="sim-kv"><span>Term</span><strong>${e.term_installments} installments</strong></div>
-    <div class="sim-table">
-      <div class="sim-row head"><span>Scenario</span><span>ECL ($)</span></div>
-      <div class="sim-row"><span>Baseline</span><span>${s.baseline.toFixed(2)}</span></div>
-      <div class="sim-row"><span>Upside</span><span>${s.upside.toFixed(2)}</span></div>
-      <div class="sim-row"><span>Downside</span><span>${s.downside.toFixed(2)}</span></div>
-    </div>`;
+    <div class="sim-big">$${e.weighted_ecl.toFixed(2)}</div>
+    <div class="sim-big-label">weighted ECL · ${e.weighted_ecl_pct_of_ead.toFixed(1)}% of EAD</div>
+    ${bar("Baseline", s.baseline, max, "var(--accent)", "$" + s.baseline.toFixed(2))}
+    ${bar("Upside", s.upside, max, "var(--good)", "$" + s.upside.toFixed(2))}
+    ${bar("Downside", s.downside, max, "var(--bad)", "$" + s.downside.toFixed(2))}
+    <div class="sim-kv"><span>Term</span><strong>${e.term_installments} installments</strong></div>`;
 }
 
 function renderMarkov(m) {
   const states = m.transition_matrix.states;
   const mat = m.transition_matrix.matrix;
+  const cols = states.length + 1;
+  const head = `<span class="hm-head">from ↓</span>` + states.map(s => `<span class="hm-head">${s}</span>`).join("");
   const rows = mat.map((r, i) =>
-    `<div class="sim-row"><span>${states[i]}</span><span>${r.map(x => x.toFixed(3)).join("  ")}</span></div>`
+    `<span class="hm-cell" style="color:var(--muted)">${states[i]}</span>` +
+    r.map(v => `<span class="hm-cell" style="background:rgba(255,95,208,${(0.08 + v * 0.6).toFixed(3)})">${v.toFixed(2)}</span>`).join("")
   ).join("");
-  const scen = Object.entries(m.scenario_default_by_t).map(([k, v]) =>
-    `<div class="sim-row"><span>${k}</span><span>t12 ${(v.t12 * 100).toFixed(0)}% · t24 ${(v.t24 * 100).toFixed(0)}%</span></div>`
-  ).join("");
+  const scen = Object.entries(m.scenario_default_by_t).map(([k, v]) => {
+    const t12 = v.t12 * 100, t24 = v.t24 * 100;
+    return `${bar(k + " · t12", t12, 100, "var(--accent)", t12.toFixed(0) + "%")}${bar(k + " · t24", t24, 100, "var(--accent2)", t24.toFixed(0) + "%")}`;
+  }).join("");
   document.getElementById("simMarkov").innerHTML = `
-    <div class="sim-table">
-      <div class="sim-row head"><span>→ from state</span><span>current · delinq · collection</span></div>
-      ${rows}
-    </div>
+    <div class="heatmap" style="grid-template-columns:repeat(${cols}, 1fr)">${head}${rows}</div>
     <div class="sim-sub">Cumulative P(default) by scenario</div>
-    <div class="sim-table">${scen}</div>`;
+    ${scen}`;
 }
 
 function renderSims() {
@@ -478,9 +555,12 @@ function renderBacktest(b) {
   const bt = b.backtest;
   const sp = b.synthetic_population;
   const pi = b.prediction_interval;
-  const curveRows = Object.entries(bt.threshold_curve).map(([t, p]) =>
-    `<div class="sim-row"><span>PD &lt; ${t}</span><span>$${fmtInt(p)}</span></div>`
-  ).join("");
+  const curve = Object.entries(bt.threshold_curve);
+  const maxProfit = Math.max(...curve.map(([, p]) => p)) || 1;
+  const curveChart = curve.map(([t, p]) => {
+    const h = Math.max(2, Math.round((p / maxProfit) * 100));
+    return `<div class="vbar" title="PD < ${t} → $${fmtInt(p)}"><span class="vb-fill" style="height:${h}px"></span><span class="vb-tick">${t}</span></div>`;
+  }).join("");
   document.getElementById("simBacktest").innerHTML = `
     <div class="bt-grid">
       <div class="bt-cell"><span class="bt-label">Best model</span><strong>${b.best_model}</strong></div>
@@ -497,7 +577,7 @@ function renderBacktest(b) {
     <div class="bt-cols">
       <div>
         <div class="sim-sub">Profit by approval threshold</div>
-        <div class="sim-table">${curveRows}</div>
+        <div class="vchart">${curveChart}</div>
       </div>
       <div>
         <div class="sim-sub">Synthetic population (${sp.n} applicants)</div>
@@ -509,8 +589,75 @@ function renderBacktest(b) {
         <div class="sim-kv"><span>Confident fraction</span><strong>${(pi.confident_fraction * 100).toFixed(1)}%</strong></div>
       </div>
     </div>`;
-  document.getElementById("heroUplift").textContent = "+$" + fmtInt(bt.uplift);
   document.getElementById("heroPct").textContent = "+" + bt.uplift_pct + "%";
+  animateHero(b);
+}
+
+function animateHero(bt) {
+  const total = bt.backtest.best_profit;
+  const reviewed = bt.split.test;
+  const vaxRate = 0.62;
+  const targetVax = Math.round(reviewed * vaxRate);
+  const duration = 3600;
+  const start = performance.now();
+  const feed = document.getElementById("heroFeed");
+  const hero = document.querySelector(".hero-inner");
+  let lastFeed = 0;
+  let nextSurvivor = 1;
+  let pushed = 0;
+  const MAX_CHIPS = 24;
+
+  function spawnParticle(kind) {
+    const el = document.createElement("span");
+    el.className = "particle " + kind;
+    el.textContent = kind === "cure" ? "$" : "✖";
+    el.style.left = (18 + Math.random() * 64) + "%";
+    el.style.top = (26 + Math.random() * 34) + "%";
+    hero.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+
+  function pushChip(now) {
+    if (now - lastFeed < 64 || pushed >= MAX_CHIPS) return;
+    lastFeed = now;
+    const cure = Math.random() < vaxRate;
+    const chip = document.createElement("span");
+    chip.className = "feed-chip " + (cure ? "ok" : "no");
+    chip.textContent = (cure ? "💰" : "🚨") + " #" + nextSurvivor.toLocaleString();
+    nextSurvivor += Math.round(reviewed / MAX_CHIPS) || 1;
+    feed.appendChild(chip);
+    spawnParticle(cure ? "cure" : "purge");
+    pushed++;
+    while (feed.childElementCount > MAX_CHIPS) feed.removeChild(feed.firstElementChild);
+  }
+
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const rv = Math.round(reviewed * eased);
+    const vx = Math.round(targetVax * eased);
+    const pg = rv - vx;
+    const profit = Math.round(total * eased);
+
+    document.getElementById("heroProfit").textContent = "$" + fmtInt(profit);
+    document.getElementById("liveReviewed").textContent = rv.toLocaleString();
+    document.getElementById("liveApproved").textContent = vx.toLocaleString();
+    document.getElementById("liveRejected").textContent = pg.toLocaleString();
+    document.getElementById("heroStatus").textContent =
+      rv >= reviewed ? "Complete — backtest finished" : "Reviewing applicant #" + rv.toLocaleString();
+    pushChip(now);
+
+    if (p < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      const done = document.createElement("span");
+      done.className = "feed-chip done";
+      done.textContent = "✓ Backtest complete";
+      feed.appendChild(done);
+      while (feed.childElementCount > MAX_CHIPS) feed.removeChild(feed.firstElementChild);
+    }
+  }
+  requestAnimationFrame(tick);
 }
 
 function init() {
@@ -524,11 +671,11 @@ function init() {
 }
 
 const FIGHTER_META = {
-  "Old Money": { tag: "Quiet luxury · pays on time", skin: "#f1c27d", hair: "#c9a37a", outfit: "#2e7d32", accessory: "tophat" },
-  "Main Character": { tag: "Average, but thinks they're special", skin: "#f1c27d", hair: "#4aa3ff", outfit: "#1f6fb2", accessory: "none" },
-  "Loyal Regular": { tag: "Been here before · always comes back", skin: "#e0a86f", hair: "#8b5cf6", outfit: "#6d4c9f", accessory: "beanie" },
-  "Doom Spender": { tag: "Stress-buys · defaults", skin: "#f0b27a", hair: "#d64545", outfit: "#b91c1c", accessory: "angry" },
-  "Crypto Bro": { tag: "To the moon… or bankruptcy", skin: "#f1c27d", hair: "#f59e0b", outfit: "#d97706", accessory: "sunglasses" },
+  "Vice Tycoon": { tag: "Quiet luxury · pays on time", skin: "#f1c27d", hair: "#c9a37a", outfit: "#2e7d32", accessory: "tophat", accent: "#ff5fd0", heat: 1 },
+  "Lucia": { tag: "The protagonist · plays it smart", skin: "#e8b88a", hair: "#3a2a1a", outfit: "#7c2d7c", accessory: "none", accent: "#ffb84d", heat: 2 },
+  "Jason": { tag: "Ride-or-die · reliable-ish", skin: "#f1c27d", hair: "#b98a3e", outfit: "#1f6fb2", accessory: "none", accent: "#4aa3ff", heat: 3 },
+  "High Roller": { tag: "Lives fast · defaults faster", skin: "#f0b27a", hair: "#d64545", outfit: "#b91c1c", accessory: "angry", accent: "#ff5f6d", heat: 4 },
+  "Crypto Bro": { tag: "To the moon… or bankruptcy", skin: "#f1c27d", hair: "#f59e0b", outfit: "#d97706", accessory: "sunglasses", accent: "#f59e0b", heat: 5 },
 };
 
 let audioCtx = null;
@@ -545,6 +692,60 @@ function playSelect() {
     o.connect(g); g.connect(audioCtx.destination);
     o.start(); o.stop(audioCtx.currentTime + 0.18);
   } catch (e) {}
+}
+
+let musicOn = false;
+let musicCtx = null;
+let musicTimer = null;
+const CHORDS = [
+  { pad: [130.81, 155.56, 196.00], bass: 65.41 },   // C minor
+  { pad: [103.83, 130.81, 155.56], bass: 51.91 },   // Ab major
+  { pad: [155.56, 196.00, 233.08], bass: 77.78 },   // Eb major
+  { pad: [116.54, 146.83, 174.61], bass: 58.27 },   // Bb major
+];
+function playChord(idx) {
+  const t = musicCtx.currentTime;
+  const c = CHORDS[idx];
+  const lp = musicCtx.createBiquadFilter();
+  lp.type = "lowpass"; lp.frequency.value = 900; lp.connect(musicCtx.destination);
+  c.pad.forEach(f => {
+    const o = musicCtx.createOscillator();
+    o.type = "sawtooth"; o.frequency.value = f;
+    const g = musicCtx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.05, t + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+    o.connect(g); g.connect(lp);
+    o.start(t); o.stop(t + 1.8);
+  });
+  const b = musicCtx.createOscillator();
+  b.type = "triangle"; b.frequency.value = c.bass;
+  const bg = musicCtx.createGain();
+  bg.gain.setValueAtTime(0.0001, t);
+  bg.gain.linearRampToValueAtTime(0.12, t + 0.1);
+  bg.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+  b.connect(bg); bg.connect(musicCtx.destination);
+  b.start(t); b.stop(t + 1.3);
+}
+function startMusic() {
+  if (musicOn) return;
+  musicOn = true;
+  try {
+    musicCtx = musicCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (musicCtx.state === "suspended") musicCtx.resume();
+    let step = 0;
+    playChord(0);
+    musicTimer = setInterval(() => { step = (step + 1) % CHORDS.length; playChord(step); }, 1800);
+  } catch (e) { musicOn = false; }
+}
+function stopMusic() {
+  musicOn = false;
+  if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+}
+function toggleMusic() {
+  const btn = document.getElementById("musicBtn");
+  if (musicOn) { stopMusic(); btn.textContent = "🔊 MUSIC"; btn.classList.remove("on"); }
+  else { startMusic(); btn.textContent = "🔇 MUTE"; btn.classList.add("on"); }
 }
 
 function fighterSprite(meta) {
@@ -567,25 +768,17 @@ function fighterSprite(meta) {
   </svg>`;
 }
 
-function announce() {
-  try {
-    const u = new SpeechSynthesisUtterance("Choose your fighter!");
-    u.rate = 0.85;
-    u.pitch = 0.65;
-    u.volume = 1;
-    speechSynthesis.speak(u);
-  } catch (e) {}
-}
-
 function renderChips() {
   const box = document.getElementById("chips");
   box.innerHTML = "";
   for (const name of Object.keys(PROFILES)) {
-    const meta = FIGHTER_META[name] || { tag: "", skin: "#f1c27d", hair: "#999", outfit: "#555", accessory: "none" };
+    const meta = FIGHTER_META[name] || { tag: "", skin: "#f1c27d", hair: "#999", outfit: "#555", accessory: "none", accent: "#ff5fd0", heat: 3 };
+    const stars = "★".repeat(meta.heat) + "☆".repeat(5 - meta.heat);
     const c = document.createElement("button");
-    c.className = "fighter" + (name === "Main Character" ? " active" : "");
+    c.className = "fighter" + (name === "Lucia" ? " active" : "");
     c.dataset.profile = name;
-    c.innerHTML = `<div class="sprite">${fighterSprite(meta)}</div><div class="fname">${name}</div><div class="ftag">${meta.tag}</div>`;
+    c.style.setProperty("--pc", meta.accent);
+    c.innerHTML = `<div class="sprite">${fighterSprite(meta)}</div><div class="fname">${name}</div><div class="ftag">${meta.tag}</div><div class="heat"><span class="heat-label">HEAT</span><span class="stars">${stars}</span></div>`;
     c.addEventListener("click", () => { playSelect(); applyProfile(name); });
     box.appendChild(c);
   }
